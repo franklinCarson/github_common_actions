@@ -53,7 +53,7 @@ jobs:
         id: check_latest
         uses: franklinCarson/github_common_actions/.github/actions/is-release-latest@main
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.CICD_GITHUB_TOKEN }}
           repo-name: ${{ github.repository }}
           release-tag: ${{ needs.GetImageVersion.outputs.IMAGE_VERSION }}
 
@@ -71,7 +71,7 @@ jobs:
         id: check_pre_release_candidate
         uses: franklinCarson/github_common_actions/.github/actions/is-pre-release-candidate@main
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.CICD_GITHUB_TOKEN }}
           release-tag: ${{ needs.GetImageVersion.outputs.IMAGE_VERSION }}
           repo-name: ${{ github.repository }}
 
@@ -152,7 +152,7 @@ jobs:
       - name: Cache Go dependencies
         uses: franklinCarson/github_common_actions/.github/actions/cache-go-dependencies@main
         with:
-          ssh-private-key: ${{ secrets.GITHUB_ACTION_SSH_KEY }}
+          ssh-private-key: ${{ secrets.CICD_GITHUB_SSH_KEY }}
 
   GoTest:
     needs:
@@ -188,8 +188,8 @@ jobs:
         with:
           image-name: ${{ needs.GetRepoName.outputs.SERVICE_NAME }}
           image-version: ${{ needs.GetImageVersion.outputs.IMAGE_VERSION }} # Use the release tag as the image version. This keeps the image version in sync with the release version.
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_INFRA }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_INFRA }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-account-id: ${{ vars.AWS_ACCOUNT_ID }}
           aws-region: us-west-2
 
@@ -213,8 +213,8 @@ jobs:
       - name: Deploy to Dev
         uses: franklinCarson/github_common_actions/.github/actions/deploy-to-env@main
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_INFRA }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_INFRA }}
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-account-id: ${{ vars.AWS_ACCOUNT_ID }}
           aws-region: us-west-2
           eks-cluster-name: spruce-dev-eks-cluster
@@ -241,8 +241,8 @@ jobs:
   #     - name: Deploy to Stage
   #       uses: franklinCarson/github_common_actions/.github/actions/deploy-to-env@main
   #       with:
-  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_INFRA }}
-  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_INFRA }}
+  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   #         aws-account-id: ${{ secrets.AWS_ACCOUNT_ID }}
   #         aws-region: us-west-2
   #         eks-cluster-name: covr-dev-cluster-sebQAw
@@ -270,8 +270,8 @@ jobs:
   #     - name: Deploy to Prod
   #       uses: franklinCarson/github_common_actions/.github/actions/deploy-to-env@main
   #       with:
-  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID_INFRA }}
-  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY_INFRA }}
+  #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+  #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
   #         aws-account-id: ${{ secrets.AWS_ACCOUNT_ID }}
   #         aws-region: us-west-2
   #         eks-cluster-name: covr-prod-cluster-l9vy
