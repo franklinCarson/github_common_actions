@@ -51,7 +51,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Check if this is the latest release
         id: check_latest
-        uses: franklinCarson/github_common_actions/.github/actions/is-release-latest@main
+        uses: franklinCarson/github_common_actions/.github/actions/is-release-latest@master
         with:
           github-token: ${{ secrets.CICD_GITHUB_TOKEN }}
           repo-name: ${{ github.repository }}
@@ -69,7 +69,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Check if this is a pre-release candidate
         id: check_pre_release_candidate
-        uses: franklinCarson/github_common_actions/.github/actions/is-pre-release-candidate@main
+        uses: franklinCarson/github_common_actions/.github/actions/is-pre-release-candidate@master
         with:
           github-token: ${{ secrets.CICD_GITHUB_TOKEN }}
           release-tag: ${{ needs.GetImageVersion.outputs.IMAGE_VERSION }}
@@ -90,7 +90,7 @@ jobs:
         uses: actions/checkout@v4
       - name: Check if the image already exists
         id: image_exists
-        uses: franklinCarson/github_common_actions/.github/actions/check-if-image-exists@main
+        uses: franklinCarson/github_common_actions/.github/actions/check-if-image-exists@master
         with:
           image-name: ${{ needs.GetRepoName.outputs.SERVICE_NAME }}
           image-version: ${{ needs.GetImageVersion.outputs.IMAGE_VERSION }}
@@ -118,7 +118,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
       - name: Re-tag the image as latest if it already exists
-        uses: franklinCarson/github_common_actions/.github/actions/re-tag-image-as-latest@main
+        uses: franklinCarson/github_common_actions/.github/actions/re-tag-image-as-latest@master
         with:
           image-name: ${{ needs.GetRepoName.outputs.SERVICE_NAME }}
           image-version: ${{ needs.GetImageVersion.outputs.IMAGE_VERSION }}
@@ -137,7 +137,7 @@ jobs:
     steps:
       - name: Check out code
         uses: actions/checkout@v4
-      - uses: franklinCarson/github_common_actions/.github/actions/lint@main
+      - uses: franklinCarson/github_common_actions/.github/actions/lint@master
 
   CacheGoDependencies:
     runs-on: ubuntu-latest
@@ -150,7 +150,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
       - name: Cache Go dependencies
-        uses: franklinCarson/github_common_actions/.github/actions/cache-go-dependencies@main
+        uses: franklinCarson/github_common_actions/.github/actions/cache-go-dependencies@master
         with:
           ssh-private-key: ${{ secrets.CICD_GITHUB_SSH_KEY }}
 
@@ -166,7 +166,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
       - name: Run tests
-        uses: franklinCarson/github_common_actions/.github/actions/go-test@main
+        uses: franklinCarson/github_common_actions/.github/actions/go-test@master
 
   BuildAndPublishImage:
     needs:
@@ -184,7 +184,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
       - name: Build and publish Docker image if it does not already exist
-        uses: franklinCarson/github_common_actions/.github/actions/build-and-publish-docker-image@main
+        uses: franklinCarson/github_common_actions/.github/actions/build-and-publish-docker-image@master
         with:
           image-name: ${{ needs.GetRepoName.outputs.SERVICE_NAME }}
           image-version: ${{ needs.GetImageVersion.outputs.IMAGE_VERSION }} # Use the release tag as the image version. This keeps the image version in sync with the release version.
@@ -211,7 +211,7 @@ jobs:
       - name: Check out code
         uses: actions/checkout@v4
       - name: Deploy to Dev
-        uses: franklinCarson/github_common_actions/.github/actions/deploy-to-env@main
+        uses: franklinCarson/github_common_actions/.github/actions/deploy-to-env@master
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -239,7 +239,7 @@ jobs:
   #     - name: Check out code
   #       uses: actions/checkout@v4
   #     - name: Deploy to Stage
-  #       uses: franklinCarson/github_common_actions/.github/actions/deploy-to-env@main
+  #       uses: franklinCarson/github_common_actions/.github/actions/deploy-to-env@master
   #       with:
   #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
   #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -268,7 +268,7 @@ jobs:
   #     - name: Check out code
   #       uses: actions/checkout@v4
   #     - name: Deploy to Prod
-  #       uses: franklinCarson/github_common_actions/.github/actions/deploy-to-env@main
+  #       uses: franklinCarson/github_common_actions/.github/actions/deploy-to-env@master
   #       with:
   #         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
   #         aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}

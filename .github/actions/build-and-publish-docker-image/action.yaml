@@ -28,7 +28,7 @@ runs:
   using: 'composite'
   steps:
     - name: Load vendor directory from cache
-      uses: franklinCarson/github_common_actions/.github/actions/load-cached-go-dependencies@main
+      uses: franklinCarson/github_common_actions/.github/actions/load-cached-go-dependencies@master
 
     - name: Build Docker image
       shell: 'bash'
@@ -36,7 +36,7 @@ runs:
 
     - name: 'Login to ECR'
       if: ${{ inputs.dry-run == 'false' }}
-      uses: franklinCarson/github_common_actions/.github/actions/aws-ecr-login@main
+      uses: franklinCarson/github_common_actions/.github/actions/aws-ecr-login@master
       with:
         aws_access_key_id: ${{ inputs.aws-access-key-id }}
         aws_secret_access_key: ${{ inputs.aws-secret-access-key }}

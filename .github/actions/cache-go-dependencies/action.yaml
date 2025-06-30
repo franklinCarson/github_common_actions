@@ -27,7 +27,7 @@ runs:
 
     - name: Get Go Version
       id: get-go-version
-      uses: franklinCarson/github_common_actions/.github/actions/get-go-version@main
+      uses: franklinCarson/github_common_actions/.github/actions/get-go-version@master
 
     - name: Set up Go
       env:
