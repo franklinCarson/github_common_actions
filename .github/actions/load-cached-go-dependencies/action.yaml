@@ -1,0 +1,10 @@
+name: 'Load Cached Go Dependencies'
+description: 'This action loads the vendor directory from the cache.'
+runs:
+  using: 'composite'
+  steps:
+    - name: Load vendor directory from cache
+      uses: actions/cache@v4
+      with:
+        path: vendor
+        key: ${{ runner.os }}-go-mod-vendor-${{ hashFiles('**/go.mod', '**/go.sum') }}

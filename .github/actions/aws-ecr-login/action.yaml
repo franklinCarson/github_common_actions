@@ -1,0 +1,32 @@
+name: 'AWS ECR Login'
+description: 'This action logs into AWS ECR using the provided credentials.'
+
+inputs:
+  aws_access_key_id:
+    description: 'AWS Access Key ID'
+    required: true
+  aws_secret_access_key:
+    description: 'AWS Secret Access Key'
+    required: true
+  aws_region:
+    description: 'AWS Region'
+    default: 'us-west-2'
+  aws_account_id:
+    description: 'AWS Account ID'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 'Configure AWS credentials'
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ inputs.aws_access_key_id }}
+        aws-secret-access-key: ${{ inputs.aws_secret_access_key }}
+        aws-region: ${{ inputs.aws_region }}
+
+    - name: 'Login to ECR'
+      shell: 'bash'
+      run: |
+        aws sts get-caller-identity
+        aws ecr get-login-password --region ${{ inputs.aws_region }} | docker login --username AWS --password-stdin ${{ inputs.aws_account_id }}.dkr.ecr.${{ inputs.aws_region }}.amazonaws.com

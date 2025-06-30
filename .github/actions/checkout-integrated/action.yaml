@@ -1,0 +1,17 @@
+name: "Checkout Code Integrated with the Main branch"
+description: "This action checks out the main branch and integrates your changes with it locally. This is useful for testing the integrated changes before pushing them to the main branch."
+runs:
+  using: "composite"
+  steps:
+    - name: "Checkout main branch"
+      uses: actions/checkout@v4
+      with:
+        ref: "main"
+        fetch-depth: 0
+    - name: "Integrate with current branch"
+      shell: 'bash'
+      run: |
+        git config --global user.email "carson@franklin.ro"
+        git config --global user.name "Ben Franklin The GitHub Workflow"
+        git fetch origin ${{ github.head_ref }}:${{ github.head_ref }}
+        git merge ${{ github.head_ref }}

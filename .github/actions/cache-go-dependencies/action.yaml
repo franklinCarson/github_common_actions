@@ -1,0 +1,55 @@
+name: 'Cache Go Dependencies'
+description: |
+  This action caches the vendor directory, so it can be reused in subsequent jobs. 
+  This speeds up the workflow as downloading dependencies is the slowest step. 
+  It is also important to note that the cache is preserved between workflow runs, 
+  so the vendor directory will be reused in subsequent workflow runs. 
+  This step only invalidates the cache if the go.mod or go.sum files change.
+
+inputs:
+  ssh-private-key:
+    description: 'The SSH key to use to access private GoLang repositories.'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up SSH key to access private GoLang repositories
+      uses: webfactory/ssh-agent@v0.9.0
+      with:
+        ssh-private-key: ${{ inputs.ssh-private-key }}
+
+    - name: Configure Git to use SSH
+      shell: 'bash'
+      run: |
+        git config --global url."git@github.com:".insteadOf "https://github.com/"
+      # This is necessary for go mod to download private repositories.
+
+    - name: Get Go Version
+      id: get-go-version
+      uses: franklinCarson/github_common_actions/.github/actions/get-go-version@main
+
+    - name: Set up Go
+      env:
+        GOPRIVATE: github.com/franklinCarson/*
+        # This is necessary for go mod to download from our private repositories.
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ steps.get-go-version.outputs.go-version }}
+
+    - name: Check cache for vendor directory
+      id: cache-vendor
+      uses: actions/cache@v4
+      with:
+        path: vendor
+        key: ${{ runner.os }}-go-mod-vendor-${{ hashFiles('**/go.sum', '**/go.mod') }}
+        # Cache key is based on the OS and the go.mod and go.sum files' contents.
+
+    - name: Install dependencies via go mod vendor if not go.mod or go.sum have changed
+      if: steps.cache-vendor.outputs.cache-hit != 'true'
+      # Only run if the vendor directory is not already cached.
+      shell: 'bash'
+      run: |
+        go clean -modcache
+        rm -rf vendor
+        go mod vendor

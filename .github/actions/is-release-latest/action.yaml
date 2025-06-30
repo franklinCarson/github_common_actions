@@ -1,0 +1,48 @@
+name: "Is Release Latest"
+description: "This action checks if the current release is the latest release."
+inputs:
+  github-token:
+    description: "GitHub token."
+    required: true
+  repo-name:
+      description: "The name of the repository."
+      required: true
+  release-tag:
+    description: "The tag of the release."
+    required: true
+
+outputs:
+  IS_LATEST:
+    description: "Whether the release is the latest release."
+    value: ${{ steps.check_latest.outputs.is_latest }}
+runs:
+  using: "composite"
+  steps:
+    - name: Check if this is the latest release
+      id: check_latest
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: |
+        set -e
+        echo "Current release tag: ${{ inputs.release-tag }}"
+        
+        # Fetch the latest release tag name using the GitHub API.
+        LATEST_RELEASE=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+          https://api.github.com/repos/${{ inputs.repo-name }}/releases/latest | jq -r '.tag_name')
+        echo "Latest release tag: $LATEST_RELEASE"
+        
+        # Compare the current release tag with the latest release tag.
+        if [ "${{ inputs.release-tag }}" = "$LATEST_RELEASE" ]; then
+          echo "IS_LATEST=true" >> $GITHUB_OUTPUT
+        else
+          echo "IS_LATEST=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: Echo the output for debugging
+      shell: bash
+      run: |
+        echo results:
+        echo "repo-name: ${{ inputs.repo-name }}"
+        echo "release-tag: ${{ inputs.release-tag }}"
+        echo "IS_LATEST=${{ steps.check_latest.outputs.is_latest }}"

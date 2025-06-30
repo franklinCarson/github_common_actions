@@ -1,0 +1,98 @@
+name: 'Re-tag Image as Latest in ECR'
+description: 'Re-tags an existing Docker image in Amazon ECR with the "latest" tag.'
+inputs:
+  image-name:
+    description: 'The name of the Docker image.'
+    required: true
+  image-version:
+    description: 'The current version (tag) of the Docker image.'
+    required: true
+  aws-access-key-id:
+    description: 'AWS Access Key ID.'
+    required: true
+  aws-secret-access-key:
+    description: 'AWS Secret Access Key.'
+    required: true
+  aws-account-id:
+    description: 'AWS Account ID.'
+    required: true
+  aws-region:
+    description: 'AWS Region.'
+    required: true
+runs:
+  using: 'composite'
+  steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ inputs.aws-access-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+        aws-account-id: ${{ inputs.aws-account-id }}
+        aws-region: ${{ inputs.aws-region }}
+
+    # This step re-tags an existing Docker image in Amazon ECR with the "latest" tag.
+    # It does this by retrieving the image manifest of the existing image (specified by 'image-version')
+    # and then pushing that manifest back to ECR with the 'latest' tag.
+    # By using the image manifest, we avoid pulling and pushing the actual image layers,
+    # which saves time and bandwidth.
+    - name: Re-tag image as latest in ECR
+      id: re-tag
+      shell: bash
+      run: |
+        # Exit immediately if a command exits with a non-zero status.
+        set -e
+
+        # Assign input values to variables for clarity.
+        IMAGE_NAME="${{ inputs.image-name }}"         # The name of the Docker image/repository in ECR.
+        IMAGE_VERSION="${{ inputs.image-version }}"   # The current tag of the image that we want to re-tag.
+        AWS_REGION="${{ inputs.aws-region }}"         # AWS region where your ECR repository is located.
+        AWS_ACCOUNT_ID="${{ inputs.aws-account-id }}" # AWS account ID for the Covr Infra AWS account.
+        REPOSITORY_NAME="${IMAGE_NAME}"               # Repository name in ECR.
+        SOURCE_TAG="${IMAGE_VERSION}"                 # The tag of the existing image.
+        TARGET_TAG="latest"                           # The new tag we want to apply ('latest').
+
+        # Retrieve the image manifest for the source image.
+        # The image manifest contains metadata about the image layers and configuration.
+        # We use 'aws ecr batch-get-image' to get this manifest without downloading the entire image.
+        IMAGE_MANIFEST=$(aws ecr batch-get-image \
+          --registry-id "${AWS_ACCOUNT_ID}" \
+          --repository-name "${REPOSITORY_NAME}" \
+          --image-ids imageTag="${SOURCE_TAG}" \
+          --query 'images[0].imageManifest' \
+          --output text)
+
+        # Check if the image manifest was successfully retrieved.
+        # If the manifest is empty, it means the source image does not exist in ECR,
+        # and we cannot proceed with re-tagging.
+        if [ -z "$IMAGE_MANIFEST" ]; then
+          echo "Error: Failed to retrieve image manifest for image '${REPOSITORY_NAME}:${SOURCE_TAG}'."
+          exit 1
+        fi
+
+        # Attempt to push the image manifest to ECR with the new tag ('latest').
+        # This effectively adds the 'latest' tag to the existing image without re-uploading the image data.
+        # The 'aws ecr put-image' command creates or updates the image manifest and tags associated with an image.
+        # We handle the 'ImageAlreadyExistsException' to consider it a success if the image already exists.
+        set +e  # Disable immediate exit on error to handle exceptions.
+        PUT_IMAGE_OUTPUT=$(aws ecr put-image \
+          --registry-id "${AWS_ACCOUNT_ID}" \
+          --repository-name "${REPOSITORY_NAME}" \
+          --image-tag "${TARGET_TAG}" \
+          --image-manifest "$IMAGE_MANIFEST" 2>&1)
+        EXIT_CODE=$?
+        set -e  # Re-enable immediate exit on error.
+
+        if [ $EXIT_CODE -eq 0 ]; then
+          echo "Successfully tagged image '${REPOSITORY_NAME}:${TARGET_TAG}'."
+        else
+          # Check if the error was 'ImageAlreadyExistsException'.
+          if echo "$PUT_IMAGE_OUTPUT" | grep -q 'ImageAlreadyExistsException'; then
+            echo "Image '${REPOSITORY_NAME}:${SOURCE_TAG}' is already tagged with ${TARGET_TAG}. Considering the operation a success."
+            exit 0
+          else
+            # For any other error, output the error message and exit with failure.
+            echo "Error: Failed to tag image '${REPOSITORY_NAME}:${TARGET_TAG}'."
+            echo "$PUT_IMAGE_OUTPUT"
+            exit 1
+          fi
+        fi

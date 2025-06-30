@@ -1,0 +1,56 @@
+name: "Is Pre-Release Candidate"
+description: "This action checks if the current release is a pre-release candidate."
+inputs:
+  github-token:
+    description: "GitHub token."
+    required: true
+  release-tag:
+    description: "The tag of the release."
+    required: true
+  repo-name:
+    description: "The name of the repository."
+    required: true
+
+outputs:
+  IS_PRE_RELEASE_CANDIDATE:
+    description: "Whether the release is a pre-release candidate."
+    value: ${{ steps.check_tag.outputs.is_pre_release_candidate }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check if release tag follows pre-release candidate format
+      id: check_tag
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+      run: |
+        set -e
+        echo "Fetching details for release tag: ${{ inputs.release-tag }}"
+        
+        # Get release details by tag from the GitHub API.
+        RELEASE_DATA=$(curl -s -H "Authorization: token $GITHUB_TOKEN" \
+          "https://api.github.com/repos/${{ inputs.repo-name }}/releases/tags/${{ inputs.release-tag }}")
+        
+        # Extract the 'prerelease' boolean field.
+        IS_PRERELEASE=$(echo "$RELEASE_DATA" | jq -r '.prerelease')
+        echo "GitHub reports prerelease as: $IS_PRERELEASE"
+
+        # Define a regex for pre-release candidate tags (example: "v1.2.3-rc.1")
+        PATTERN='^v[0-9]+\.[0-9]+\.[0-9]+-rc\.[0-9]+$'
+        
+        if [ "$IS_PRERELEASE" = "true" ]; then
+          if ! [[ "${{ inputs.release-tag }}" =~ $PATTERN ]]; then
+            echo "Error: Release is marked as pre-release but the tag '${{ inputs.release-tag }}' does not match the required naming convention." >&2
+            exit 1
+          fi
+        fi
+        
+        # Write the result to GITHUB_OUTPUT so it can be used as an action output.
+        echo "IS_PRE_RELEASE_CANDIDATE=$IS_PRERELEASE" >> $GITHUB_OUTPUT
+
+    - name: Debug output
+      shell: bash
+      run: |
+        echo "release-tag: ${{ inputs.release-tag }}"
+        echo "IS_PRE_RELEASE_CANDIDATE=${{ steps.check_tag.outputs.is_pre_release_candidate }}"

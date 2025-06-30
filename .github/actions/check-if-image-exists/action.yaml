@@ -1,0 +1,67 @@
+name: 'Check if Image Exists in ECR'
+description: 'Checks if a Docker image with a specific tag exists in Amazon ECR.'
+inputs:
+  image-name:
+    description: 'The name of the Docker image.'
+    required: true
+  image-version:
+    description: 'The version (tag) of the Docker image.'
+    required: true
+  aws-access-key-id:
+    description: 'AWS Access Key ID.'
+    required: true
+  aws-secret-access-key:
+    description: 'AWS Secret Access Key.'
+    required: true
+  aws-account-id:
+    description: 'AWS Account ID.'
+    required: true
+  aws-region:
+    description: 'AWS Region.'
+    required: true
+outputs:
+  EXISTS:
+    description: 'Indicates if the image exists in ECR (true or false).'
+    value: ${{ steps.check-image.outputs.EXISTS }}
+runs:
+  using: 'composite'
+  steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ inputs.aws-access-key-id }}
+        aws-secret-access-key: ${{ inputs.aws-secret-access-key }}
+        aws-account-id: ${{ inputs.aws-account-id }}
+        aws-region: ${{ inputs.aws-region }}
+
+    # We utilize the AWS CLI to check if the image exists in ECR instead of pulling the image. This is to save on time.
+    # Pulling the image would require a lot of time and bandwidth, especially if the image is large, whereas having the
+    # CLI execute an API call to check if the image exists is much faster.
+    - name: Check if image exists in ECR
+      id: check-image
+      shell: bash
+      run: |
+        set -e
+        IMAGE_NAME="${{ inputs.image-name }}"
+        IMAGE_VERSION="${{ inputs.image-version }}"
+        AWS_REGION="${{ inputs.aws-region }}"
+        AWS_ACCOUNT_ID="${{ inputs.aws-account-id }}"
+        REPOSITORY_NAME="${IMAGE_NAME}"
+        
+        echo "Checking if image exists in ECR..."
+
+        if aws ecr describe-images \
+            --registry-id "${AWS_ACCOUNT_ID}" \
+            --repository-name "${REPOSITORY_NAME}" \
+            --image-ids imageTag="${IMAGE_VERSION}" > /dev/null 2>&1; then
+          echo "EXISTS=true" >> $GITHUB_OUTPUT
+        else
+          echo "EXISTS=false" >> $GITHUB_OUTPUT
+        fi
+    - name: Echo the output for debugging
+      shell: bash
+      run: |
+        echo results:
+        echo "image-name: ${{ inputs.image-name }}"
+        echo "image-version: ${{ inputs.image-version }}"
+        echo "EXISTS=${{ steps.check-image.outputs.EXISTS }}"

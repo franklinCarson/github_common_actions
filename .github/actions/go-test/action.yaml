@@ -1,0 +1,23 @@
+name: 'Go Test'
+description: 'This action runs the Go tests. Note: it assumes that the dependencies are already installed and cached.'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Get Go Version
+      id: get-go-version
+      uses: franklinCarson/github_common_actions/.github/actions/get-go-version@main
+
+    - name: Set up Go
+      uses: actions/setup-go@v5
+      with:
+        go-version: ${{ steps.get-go-version.outputs.go-version }}
+
+    - name: Load vendor directory from cache
+      uses: franklinCarson/github_common_actions/.github/actions/load-cached-go-dependencies@main
+
+    - name: Execute tests
+      env:
+        GOFLAGS: -mod=vendor  # Ensure Go uses the vendor directory for dependencies.
+      shell: 'bash'
+      run: go test -parallel=5 -race ./...

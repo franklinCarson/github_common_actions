@@ -1,0 +1,58 @@
+name: 'Build and Publish Docker Image'
+description: 'This action executes the docker build command after ensuring the vendor directory is present. After building the image, it tags the image with the latest and version tags and pushes both to ECR.'
+inputs:
+  image-name:
+    description: 'The name to apply to the Docker image tag.'
+    required: true
+  image-version:
+    description: 'The version to apply to the Docker image tag.'
+    required: true
+  dry-run:
+    description: 'Signals to only build the image and not publish it.'
+    required: false
+    default: 'false'
+  aws-access-key-id:
+    description: 'AWS Access Key ID. Only needed if you are not "dry running."'
+    required: false
+  aws-secret-access-key:
+    description: 'AWS Secret Access Key. Only needed if you are not "dry running."'
+    required: false
+  aws-account-id:
+    description: 'AWS Account ID. Only needed if you are not "dry running."'
+    required: false
+  aws-region:
+    description: 'AWS Region. Only needed if you are not "dry running."'
+    required: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Load vendor directory from cache
+      uses: franklinCarson/github_common_actions/.github/actions/load-cached-go-dependencies@main
+
+    - name: Build Docker image
+      shell: 'bash'
+      run: docker build -t ${{ inputs.image-name }}:latest .
+
+    - name: 'Login to ECR'
+      if: ${{ inputs.dry-run == 'false' }}
+      uses: franklinCarson/github_common_actions/.github/actions/aws-ecr-login@main
+      with:
+        aws_access_key_id: ${{ inputs.aws-access-key-id }}
+        aws_secret_access_key: ${{ inputs.aws-secret-access-key }}
+        aws_account_id: ${{ inputs.aws-account-id }}
+        aws_region: ${{ inputs.aws-region }}
+
+    - name: 'Push latest image to ECR'
+      if: ${{ inputs.dry-run == 'false' }}
+      shell: 'bash'
+      run: |
+        docker tag ${{ inputs.image-name }}:latest ${{ inputs.aws-account-id }}.dkr.ecr.${{ inputs.aws-region }}.amazonaws.com/${{ inputs.image-name }}:latest
+        docker push ${{ inputs.aws-account-id }}.dkr.ecr.${{ inputs.aws-region }}.amazonaws.com/${{ inputs.image-name }}:latest
+
+    - name: 'Push versioned image to ECR'
+      if: ${{ inputs.dry-run == 'false' }}
+      shell: 'bash'
+      run: |
+        docker tag ${{ inputs.image-name }}:latest ${{ inputs.aws-account-id }}.dkr.ecr.${{ inputs.aws-region }}.amazonaws.com/${{ inputs.image-name }}:${{ inputs.image-version }}
+        docker push ${{ inputs.aws-account-id }}.dkr.ecr.${{ inputs.aws-region }}.amazonaws.com/${{ inputs.image-name }}:${{ inputs.image-version }}

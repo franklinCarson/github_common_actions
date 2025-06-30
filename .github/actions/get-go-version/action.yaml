@@ -1,0 +1,18 @@
+name: 'Get GoLang Version'
+description: 'This action gets the GoLang version from the go.mod file in the current directory.'
+
+outputs:
+  go-version:
+    description: 'The GoLang version from the go.mod file.'
+    value: ${{ steps.get-go-version.outputs.VERSION }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 'Get GoLang Version'
+      id: get-go-version
+      shell: 'bash'
+      run: |
+        VERSION=$(grep '^go ' go.mod | awk '{print $2}')
+        echo "VERSION=${VERSION}"
+        echo "VERSION=${VERSION}" >> $GITHUB_OUTPUT
