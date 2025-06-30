@@ -58,7 +58,7 @@ jobs:
         id: check_latest
         uses: franklinCarson/github_common_actions/.github/actions/is-release-latest@master
         with:
-          github-token: ${{ secrets.CICD_GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           repo-name: ${{ github.repository }}
           release-tag: ${{ needs.GetImageVersion.outputs.IMAGE_VERSION }}
 
@@ -77,7 +77,7 @@ jobs:
         id: check_pre_release_candidate
         uses: franklinCarson/github_common_actions/.github/actions/is-pre-release-candidate@master
         with:
-          github-token: ${{ secrets.CICD_GITHUB_TOKEN }}
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           release-tag: ${{ needs.GetImageVersion.outputs.IMAGE_VERSION }}
           repo-name: ${{ github.repository }}
 
