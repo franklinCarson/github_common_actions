@@ -11,6 +11,9 @@ inputs:
   aws-region:
     description: "AWS Region"
     required: true
+  aws-account-id:
+    description: "AWS Account ID"
+    required: true
   eks-cluster-name:
     description: "EKS Cluster Name"
     required: true
@@ -52,4 +55,4 @@ runs:
     - name: Update Image Version
       shell: 'bash'
       run: |
-        kubectl set image deployment/${{ inputs.service-name }} ${{ inputs.service-name }}=750966670282.dkr.ecr.us-west-2.amazonaws.com/${{ inputs.service-name }}:${{ inputs.image-version }} --namespace=${{ inputs.namespace }}
+        kubectl set image deployment/${{ inputs.service-name }} ${{ inputs.service-name }}=${{ inputs.aws-account-id }}.dkr.ecr.us-west-2.amazonaws.com/${{ inputs.service-name }}:${{ inputs.image-version }} --namespace=${{ inputs.namespace }}
