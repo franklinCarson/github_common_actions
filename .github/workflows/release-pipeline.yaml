@@ -235,6 +235,7 @@ jobs:
           namespace: dev
           service-name: ${{ needs.GetRepoName.outputs.SERVICE_NAME }}
           image-version: ${{ needs.GetImageVersion.outputs.IMAGE_VERSION }}
+          chart-dir: ./helm
 
   # DeployToStage:
   #   needs:
