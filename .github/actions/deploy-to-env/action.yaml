@@ -51,7 +51,7 @@ runs:
     - name: Helm upgrade/install
       shell: 'bash'
       run: |
-        helm upgrade ${{ inputs.service-name }} ${{ inputs.chart-dir }} -f ${{ inputs.chart-dir }}/values.yaml -f ${{ inputs.chart-dir }}/${{ inputs.values-filename }} --namespace ${{ inputs.namespace }} --install
+        helm upgrade ${{ inputs.service-name }} ${{ inputs.chart-dir }} -f ${{ inputs.chart-dir }}/values.yaml -f ${{ inputs.chart-dir }}/${{ inputs.values-filename }} --namespace ${{ inputs.namespace }} --install --create-namespace
     - name: Update Image Version
       shell: 'bash'
       run: |
